@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}My Registrations{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">My Registered Events</h2>
+
+    {% if registered_events %}
+        <div class="row">
+            {% for reg, event in registered_events %}
+                <div class="col-md-4">
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Event: {{ event.name }}</h5>
+                            <p class="card-text"><strong>Pet Name:</strong> {{ reg.pet_name }}</p>
+                            <p class="card-text"><strong>Pet Type:</strong> {{ reg.pet_type }}</p>
+                            <p class="card-text"><strong>Pet Age:</strong> {{ reg.pet_age }} years</p>
+                            <p class="card-text">
+                                <strong>Status:</strong> 
+                                {% if reg.paid %}
+                                    <span class="badge bg-success">Paid</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">Pending Payment</span>
+                                {% endif %}
+                            </p>
+                            {% if not reg.paid %}
+                                <a href="{{ url_for('pay_fee', registration_id=reg.id) }}" class="btn btn-primary">Pay Fee</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>No registrations found.</p>
+    {% endif %}
+</div>
+
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+    {% if events %}
+        <div class="grid" id="competitionsGrid">
+            <div id="registered-events-container" class="event-container" style="display: none;">
+                {% for event in registered_events %}
+                <div class="event-card">
+                    <img src="{{ url_for('static', filename='images/' + event.image_filename) }}" width="150">
+                    <h3>{{ event.title }}</h3>
+                    <p>{{ event.description }}</p>
+                    <button class="details-btn">View Details</button>
+                </div>
+                {% else %}
+                <p>No registered events yet.</p>
+                {% endfor %}
+            </div>
+            
+            {% for event in events %}
+            <div class="card" onclick="showModal('{{ event.id }}')">
+                <img src="{{ url_for('static', filename='images/'+event.image_filename) }}" class="card-img" alt="{{ event.title }}">
+                <div class="card-content">
+                    <h2 style="margin-bottom: 10px; color: #333;">{{ event.title }}</h2>
+                    <p style="display: flex; align-items: center; gap: 8px; font-size: 18px; color: #050908;">
+                        <i class="fa-regular fa-calendar"></i> {{ event.date }}
+                    </p>
+                                       
+                    <p style="display: flex; align-items: center;margin-bottom: 10px; gap: 8px; font-size: 18px; color: #151111;">
+                        <i class="fa-solid fa-location-dot"></i> {{ event.location }}
+                    </p>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                        <p class="price" style="font-size: 20px; font-weight: bold; color: #0a7737;">
+                            <span style="color: black;">Fees:</span> ₹{{ event.fee }}
+                        </p>
+                        <a href="#" class="view-btn"
+                            style="padding: 8px 15px; background: #0c853b; color: white; text-decoration: none; border-radius: 5px;">
+                            Register Now
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Include the modal -->
+    {% include "modal.html" %}
+            {% endfor %}
+        </div>
+
+        <script src="{{ url_for('static', filename='app.js') }}"></script>
+    {% else %}
+        <p>No events available at the moment.</p>
+    {% endif %}
+{% endblock %}
