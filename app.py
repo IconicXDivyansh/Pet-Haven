@@ -7,6 +7,7 @@ from forms import RegistrationForm, LoginForm, EventForm, RegistrationEventForm
 from config import Config
 import os
 from werkzeug.utils import secure_filename
+from datetime import datetime
 
 
 
@@ -98,7 +99,7 @@ def competitions():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    return render_template("user_dashboard.html", events=Event.query.all())
+    return render_template("discover[team2].html", events=Event.query.all())
 
 @app.route('/add_event', methods=['GET', 'POST'])
 @login_required
@@ -167,9 +168,56 @@ def admin_dashboard():
 @login_required
 def registrations():
     registered_events = db.session.query(Registration, Event).join(Event, Registration.event_id == Event.id).filter(Registration.user_id == current_user.id).all()
-    return render_template("registrations.html", registered_events=registered_events)
-    # registered_events = Registration.query.filter_by(user_id=current_user.id).all()
-    # return render_template("registrations.html", registered_events=registered_events)
+    
+    # Convert event dates to datetime objects for comparison
+    current_date = datetime.now().date()
+    processed_events = []
+    for reg, event in registered_events:
+        event_date = datetime.strptime(event.date, '%Y-%m-%d').date()
+        can_edit = event_date > current_date
+        processed_events.append((reg, event, can_edit))
+    
+    return render_template("registrations.html", registered_events=processed_events)
+
+@app.route('/edit_registration/<int:registration_id>', methods=['GET', 'POST'])
+@login_required
+def edit_registration(registration_id):
+    registration = Registration.query.get_or_404(registration_id)
+    event = Event.query.get_or_404(registration.event_id)
+    
+    # Check if the registration belongs to the current user
+    if registration.user_id != current_user.id:
+        flash('You are not authorized to edit this registration.', 'danger')
+        return redirect(url_for('registrations'))
+    
+    # Check if the event date has passed
+    event_date = datetime.strptime(event.date, '%Y-%m-%d').date()
+    if event_date < datetime.now().date():
+        flash('Cannot edit registration for past events.', 'warning')
+        return redirect(url_for('registrations'))
+    
+    form = RegistrationEventForm()
+    
+    if form.validate_on_submit():
+        registration.pet_name = form.pet_name.data
+        registration.pet_type = form.pet_type.data
+        registration.pet_age = form.pet_age.data
+        
+        try:
+            db.session.commit()
+            flash('Registration details updated successfully!', 'success')
+            return redirect(url_for('registrations'))
+        except:
+            db.session.rollback()
+            flash('An error occurred while updating the registration.', 'danger')
+    
+    # Pre-fill form with current values
+    if request.method == 'GET':
+        form.pet_name.data = registration.pet_name
+        form.pet_type.data = registration.pet_type
+        form.pet_age.data = registration.pet_age
+    
+    return render_template('edit_registration.html', form=form, registration=registration, event=event)
 
 @app.route('/settings')
 @login_required
